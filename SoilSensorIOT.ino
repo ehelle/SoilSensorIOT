@@ -1,55 +1,82 @@
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
 #include <dht11.h>
 
-int soilSensorPin = 0;
+const int soilSensorPin = 0;
+const int soilSensorVCC = 13;
 int soilSensorValue = 0;
-int soilSensorVCC = 13;
 
 dht11 DHT11;
+const int dht11pin = 2;
 
-int dht11pin = 2;
+const int sensorIdle = 5000;
 
-int sensorIdle = 5000;
- 
+#include "params.h"
+
+const char* ssid = _SSID;
+const char* password = _PASSWORD;
+const char* mqtt_server = _MQTT_SERVER;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+char msg[50];
+
+void setup_wifi() {
+  
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
 void setup() {
-   Serial.begin(9600);  
+   Serial.begin(115200);  
    pinMode(soilSensorVCC, OUTPUT); 
    digitalWrite(soilSensorVCC, LOW);
+   setup_wifi();
+   client.setServer(mqtt_server, 1883);
 }
- 
+
+int i = 0;
 void loop() {
   
   digitalWrite(soilSensorVCC, HIGH);
   delay(100); // make sure soilSensor is powered
   soilSensorValue = analogRead(soilSensorPin); 
   digitalWrite(soilSensorVCC, LOW);  
-  Serial.print("sensor = " );                       
+  Serial.print("Soil sensor: " );                       
   Serial.println(soilSensorValue);
   
   
-  int chk = DHT11.read(DHT11PIN);
-
-  Serial.print("Read sensor: ");
+  int chk = DHT11.read(dht11pin);
+  
   switch (chk)
   {
     case DHTLIB_OK: 
-		Serial.println("OK"); 
-		break;
-    case DHTLIB_ERROR_CHECKSUM: 
-		Serial.println("Checksum error"); 
-		break;
-    case DHTLIB_ERROR_TIMEOUT: 
-		Serial.println("Time out error"); 
-		break;
+      Serial.print("Humidity (%): ");
+      Serial.println(DHT11.humidity);
+      Serial.print("Temperature (°C): ");
+      Serial.println(DHT11.temperature);
+      break;
     default: 
-		Serial.println("Unknown error"); 
-		break;
+      Serial.println("Unknown error"); 
+      break;
   }
 
-  Serial.print("Humidity (%): ");
-  Serial.println((float)DHT11.humidity, 2);
-
-  Serial.print("Temperature (°C): ");
-  Serial.println((float)DHT11.temperature, 2);
+  if (client.connect("soilsensor001", usr, pwd)) {
+    client.publish("hello/world" "Hello from esp8266 - times: " + i);
+  }
   
   delay(sensorIdle);  
 }
