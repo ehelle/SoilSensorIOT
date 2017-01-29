@@ -16,6 +16,9 @@ const int sensorIdle = 5000;
 const char* ssid = _SSID;
 const char* password = _PASSWORD;
 const char* mqtt_server = _MQTT_SERVER;
+const int mqtt_port = _MQTT_PORT;
+const char* mqtt_usr = _MQTT_USER;
+const char* mqtt_pwd = _MQTT_PASSWORD;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -45,7 +48,7 @@ void setup() {
    pinMode(soilSensorVCC, OUTPUT); 
    digitalWrite(soilSensorVCC, LOW);
    setup_wifi();
-   client.setServer(mqtt_server, 1883);
+   client.setServer(mqtt_server, mqtt_port);
 }
 
 int i = 0;
@@ -74,8 +77,8 @@ void loop() {
       break;
   }
 
-  if (client.connect("soilsensor001", usr, pwd)) {
-    client.publish("hello/world" "Hello from esp8266 - times: " + i);
+  if (client.connect("soilsensor001", mqtt_usr, mqtt_pwd)) {
+    client.publish("hello/world", "Hello from esp8266 - times: " + i);
   }
   
   delay(sensorIdle);  
