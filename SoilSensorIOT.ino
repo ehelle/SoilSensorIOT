@@ -72,6 +72,12 @@ void loop() {
       Serial.print("Temperature (°C): ");
       Serial.println(DHT11.temperature);
       break;
+    case DHTLIB_ERROR_CHECKSUM: 
+      Serial.println("Checksum error"); 
+      break;
+    case DHTLIB_ERROR_TIMEOUT: 
+      Serial.println("Time out error"); 
+      break;
     default: 
       Serial.println("Unknown error"); 
       break;
@@ -79,6 +85,7 @@ void loop() {
 
   if (client.connect("soilsensor001", mqtt_usr, mqtt_pwd)) {
     client.publish("hello/world", "Hello from esp8266 - times: " + i);
+    Serial.println("connected");
   }
   
   delay(sensorIdle);  
